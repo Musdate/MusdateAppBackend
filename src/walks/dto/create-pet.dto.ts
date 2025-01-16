@@ -1,4 +1,4 @@
-import { IsString } from "class-validator";
+import { IsArray, IsString } from "class-validator";
 
 export class CreatePetDto {
 
@@ -10,5 +10,9 @@ export class CreatePetDto {
 
     @IsString()
     comment : string;
+
+    @IsArray()
+    @IsString({ each: true })
+    walks : string[];
 
 }

@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { CreatePetDto } from './dto/create-pet.dto';
 import { UpdatePetDto } from './dto/update-pet.dto';
 import { Pet } from './entities/pet.entity';
@@ -15,7 +15,7 @@ export class WalksService {
 
   ) {}
 
-  async create(createPetDto: CreatePetDto): Promise<Pet> {
+  async create( createPetDto: CreatePetDto ): Promise<Pet> {
     
     try {
     
@@ -37,12 +37,35 @@ export class WalksService {
     return `This action returns a #${id} walk`;
   }
 
-  update( id: string , updatePetDto: UpdatePetDto ) {
-    return `This action updates a #${id} walk`;
+  async update( id: string , updatePetDto: UpdatePetDto ): Promise<Pet>  {
+
+    const updatedPet = await this.petModel.findByIdAndUpdate( id, updatePetDto, {
+      new: true,
+      runValidators: true
+    });
+
+    if ( !updatedPet ) {
+      throw new NotFoundException(`Mascota con ID "${ id }" no encontrada.`);
+    }
+
+    return updatedPet;
+  }
+
+  async addWalk( id: string , walk: string ): Promise<Pet>  {
+
+    const updatedPet = await this.petModel.findByIdAndUpdate( id,
+      { $push: { walks: walk } },
+      { new: true }
+    );
+
+    if ( !updatedPet ) {
+      throw new NotFoundException(`Mascota con ID "${ id }" no encontrada.`);
+    }
+
+    return updatedPet;
   }
 
   async remove( id: string ): Promise<Pet> {
-    console.log('eliminado el id:', id);
     return await this.petModel.findByIdAndDelete( id );
   }
 }

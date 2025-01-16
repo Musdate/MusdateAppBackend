@@ -6,11 +6,14 @@ export class Pet {
     @Prop({ required: true })
     name : string;
 
-    @Prop({ required: true })
+    @Prop({ required: false })
     type : string;
 
-    @Prop({ required: true })
+    @Prop({ required: false })
     comment : string;
+
+    @Prop({ required: false })
+    walks : string[];
 
 }
 

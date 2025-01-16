@@ -28,6 +28,11 @@ export class WalksController {
     return this.walksService.update( id, updatePetDto );
   }
 
+  @Patch(':id/addWalk')
+  addWalk( @Param('id') id: string, @Body('walk') walk: string ) {
+    return this.walksService.addWalk( id, walk );
+  }
+
   @Delete(':id')
   remove( @Param('id') id: string ) {
     return this.walksService.remove(id);
