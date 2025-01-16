@@ -7,9 +7,6 @@ export class Pet {
     name : string;
 
     @Prop({ required: false })
-    type : string;
-
-    @Prop({ required: false })
     comment : string;
 
     @Prop({ required: false })

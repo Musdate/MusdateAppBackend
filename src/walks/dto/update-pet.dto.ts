@@ -6,10 +6,6 @@ export class UpdatePetDto extends PartialType(CreatePetDto) {
 
     @IsOptional()
     @IsString()
-    type : string;
-
-    @IsOptional()
-    @IsString()
     comment : string;
 
     @IsOptional()
