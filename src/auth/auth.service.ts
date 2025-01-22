@@ -20,12 +20,12 @@ export class AuthService {
   constructor(
 
     @InjectModel( User.name )
-    private userModel: Model<User>,
-    private jwtService: JwtService
+    private readonly userModel: Model<User>,
+    private readonly jwtService: JwtService
 
   ) {}
 
-  async create(createUserDto: CreateUserDto): Promise<User> {
+  async create( createUserDto: CreateUserDto ): Promise<User> {
 
     try {
 
@@ -53,7 +53,7 @@ export class AuthService {
 
   }
 
-  async register(registerUserDto: RegisterUserDto): Promise<LoginResponse> {
+  async register( registerUserDto: RegisterUserDto ): Promise<LoginResponse> {
 
     const user = await this.create( registerUserDto );
 
@@ -61,7 +61,6 @@ export class AuthService {
       user: user,
       token: this.getJwt({ id: user._id })
     }
-
   }
 
   async login ( loginDto: LoginDto ): Promise<LoginResponse> {
@@ -72,7 +71,7 @@ export class AuthService {
     if ( !user ) {
       throw new UnauthorizedException('Credenciales no válidas.')
     }
-    
+
     if ( !bcryptjs.compareSync( password, user.password ) ) {
       throw new UnauthorizedException('Credenciales no válidas.')
     }
@@ -83,7 +82,6 @@ export class AuthService {
       user: userData,
       token: this.getJwt({ id: user._id })
     }
-
   }
 
   findAll(): Promise<User[]> {
@@ -93,7 +91,7 @@ export class AuthService {
   async findUserById( id: string ) {
     const user = await this.userModel.findById( id );
     const { password, ...userData } = user.toJSON();
-  
+
     return userData;
   }
 

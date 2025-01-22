@@ -12,10 +12,7 @@ import { User, UserSchema } from './entities/user.entity';
   imports: [
     ConfigModule.forRoot(),
     MongooseModule.forFeature([
-      {
-        name: User.name,
-        schema: UserSchema
-      }
+      { name: User.name, schema: UserSchema }
     ]),
     JwtModule.register({
       global: true,

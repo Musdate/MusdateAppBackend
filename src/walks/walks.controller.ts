@@ -2,39 +2,51 @@ import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/commo
 import { WalksService } from './walks.service';
 import { CreatePetDto } from './dto/create-pet.dto';
 import { UpdatePetDto } from './dto/update-pet.dto';
+import { CreateWalksPriceDto } from './dto/create-walks-price.dto';
 
 @Controller('walks')
 export class WalksController {
 
-  constructor(private readonly walksService: WalksService) {}
+  constructor( private readonly walksService: WalksService ) {}
 
-  @Post()
-  create( @Body() createPetDto: CreatePetDto ) {
-    return this.walksService.create(createPetDto);
+  @Post('/addPet')
+  createPet( @Body() createPetDto: CreatePetDto ) {
+    return this.walksService.createPet( createPetDto );
   }
 
-  @Get()
-  findAll() {
-    return this.walksService.findAll();
-  }s
-
-  @Get(':id')
-  findOne( @Param('id') id: string ) {
-    return this.walksService.findOne(id);
+  @Get('/getAllPets')
+  findAllPets() {
+    return this.walksService.findAllPets();
   }
 
-  @Patch(':id')
-  update( @Param('id') id: string, @Body() updatePetDto: UpdatePetDto ) {
-    return this.walksService.update( id, updatePetDto );
+  @Get('/getPet/:id')
+  findOnePet( @Param('id') id: string ) {
+    return this.walksService.findOnePet(id);
   }
 
-  @Patch(':id/addWalk')
+  @Patch('/updatePet/:id')
+  updatePet( @Param('id') id: string, @Body() updatePetDto: UpdatePetDto ) {
+    return this.walksService.updatePet( id, updatePetDto );
+  }
+
+  @Delete('/deletePet/:id')
+  removePet( @Param('id') id: string ) {
+    return this.walksService.removePet(id);
+  }
+
+  @Patch('/addWalk/:id')
   addWalk( @Param('id') id: string, @Body('walk') walk: string ) {
     return this.walksService.addWalk( id, walk );
   }
 
-  @Delete(':id')
-  remove( @Param('id') id: string ) {
-    return this.walksService.remove(id);
+  @Post('/addWalksPrice/:userId')
+  createWalksPrice( @Param('userId') userId: string, @Body() createWalksPrice: CreateWalksPriceDto ) {
+    return this.walksService.createWalksPrice( userId, createWalksPrice );
   }
+
+  @Get('/getWalksPrice/:userId')
+  getWalksPrice( @Param('userId') userId: string ) {
+    return this.walksService.findWalksPrice( userId );
+  }
+
 }

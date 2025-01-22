@@ -2,42 +2,46 @@ import { Injectable, InternalServerErrorException, NotFoundException } from '@ne
 import { CreatePetDto } from './dto/create-pet.dto';
 import { UpdatePetDto } from './dto/update-pet.dto';
 import { Pet } from './entities/pet.entity';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
+import { WalksPrice } from './entities/walks-price.entity';
+import { CreateWalksPriceDto } from './dto/create-walks-price.dto';
+import { User } from 'src/auth/entities/user.entity';
 
 @Injectable()
 export class WalksService {
 
   constructor(
-  
-    @InjectModel( Pet.name )
-    private readonly petModel: Model<Pet>
+
+    @InjectModel( Pet.name ) private readonly petModel: Model<Pet>,
+    @InjectModel( WalksPrice.name ) private readonly walksPriceModel: Model<WalksPrice>,
+    @InjectModel( User.name ) private readonly userModel: Model<User>
 
   ) {}
 
-  async create( createPetDto: CreatePetDto ): Promise<Pet> {
-    
+  async createPet( createPetDto: CreatePetDto ): Promise<Pet> {
+
     try {
-    
+
       const newPet = new this.petModel( createPetDto );
       return newPet.save();
-    
+
     } catch (error) {
 
-      throw new InternalServerErrorException('Un error inesperado ha ocurido');
+      throw new InternalServerErrorException('Un error inesperado ha ocurido.');
 
     }
   }
 
-  findAll(): Promise<Pet[]> {
+  findAllPets(): Promise<Pet[]> {
     return this.petModel.find();
   }
 
-  findOne( id: string ) {
-    return `This action returns a #${id} walk`;
+  findOnePet( id: string ) {
+    return this.petModel.findById( id );
   }
 
-  async update( id: string , updatePetDto: UpdatePetDto ): Promise<Pet>  {
+  async updatePet( id: string , updatePetDto: UpdatePetDto ): Promise<Pet>  {
 
     const updatedPet = await this.petModel.findByIdAndUpdate( id, updatePetDto, {
       new: true,
@@ -49,6 +53,10 @@ export class WalksService {
     }
 
     return updatedPet;
+  }
+
+  async removePet( id: string ): Promise<Pet> {
+    return await this.petModel.findByIdAndDelete( id );
   }
 
   async addWalk( id: string , walk: string ): Promise<Pet>  {
@@ -65,7 +73,55 @@ export class WalksService {
     return updatedPet;
   }
 
-  async remove( id: string ): Promise<Pet> {
-    return await this.petModel.findByIdAndDelete( id );
+  async createWalksPrice( userId: string, createWalksPrice: CreateWalksPriceDto ): Promise<WalksPrice> {
+
+    const user = await this.userModel.findById( userId );
+
+    if ( !user ) {
+      throw new NotFoundException('Usuario no encontrado.');
+    }
+
+    try {
+
+      const existingWalksPrice = await this.walksPriceModel.findOne({ user: new Types.ObjectId( userId ) });
+
+      if ( existingWalksPrice ) {
+        await this.walksPriceModel.findByIdAndDelete( existingWalksPrice._id );
+      }
+
+      const newWalksPrice = new this.walksPriceModel({
+        ...createWalksPrice,
+        user: user._id
+      });
+
+      user.walksPrice = newWalksPrice._id;
+
+      await user.save();
+      await newWalksPrice.save();
+
+      return newWalksPrice;
+
+    } catch (error) {
+
+      throw new InternalServerErrorException('Un error inesperado ha ocurido.');
+
+    }
+  }
+
+  async findWalksPrice( userId: string ): Promise<WalksPrice> {
+
+    const user = await this.userModel.findById( userId );
+
+    if ( !user ) {
+      throw new NotFoundException('Usuario no encontrado.');
+    }
+
+    const walksPrice = await this.walksPriceModel.findOne({ user: new Types.ObjectId( userId ) });
+
+    if ( !walksPrice ) {
+      throw new NotFoundException('WalksPrice no encontrado.');
+    }
+
+    return walksPrice;
   }
 }
