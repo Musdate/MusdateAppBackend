@@ -73,7 +73,7 @@ export class WalksService {
     return updatedPet;
   }
 
-  async createWalksPrice( userId: string, createWalksPrice: CreateWalksPriceDto ): Promise<WalksPrice> {
+  async createOrUpdateWalksPrice( userId: string, createWalksPrice: CreateWalksPriceDto ): Promise<WalksPrice> {
 
     const user = await this.userModel.findById( userId );
 
@@ -83,23 +83,16 @@ export class WalksService {
 
     try {
 
-      const existingWalksPrice = await this.walksPriceModel.findOne({ user: new Types.ObjectId( userId ) });
+      const walksPrice = await this.walksPriceModel.findOneAndUpdate(
+        { user: new Types.ObjectId( userId ) },
+        { ...createWalksPrice, user: user._id },
+        { new: true, upsert: true }
+      );
 
-      if ( existingWalksPrice ) {
-        await this.walksPriceModel.findByIdAndDelete( existingWalksPrice._id );
-      }
+      // user.walksPrice = walksPrice._id;
+      // await user.save();
 
-      const newWalksPrice = new this.walksPriceModel({
-        ...createWalksPrice,
-        user: user._id
-      });
-
-      user.walksPrice = newWalksPrice._id;
-
-      await user.save();
-      await newWalksPrice.save();
-
-      return newWalksPrice;
+      return walksPrice;
 
     } catch (error) {
 
@@ -119,7 +112,7 @@ export class WalksService {
     const walksPrice = await this.walksPriceModel.findOne({ user: new Types.ObjectId( userId ) });
 
     if ( !walksPrice ) {
-      throw new NotFoundException('WalksPrice no encontrado.');
+      return new this.walksPriceModel();
     }
 
     return walksPrice;

@@ -40,8 +40,8 @@ export class WalksController {
   }
 
   @Post('/addWalksPrice/:userId')
-  createWalksPrice( @Param('userId') userId: string, @Body() createWalksPrice: CreateWalksPriceDto ) {
-    return this.walksService.createWalksPrice( userId, createWalksPrice );
+  createOrUpdateWalksPrice( @Param('userId') userId: string, @Body() createWalksPrice: CreateWalksPriceDto ) {
+    return this.walksService.createOrUpdateWalksPrice( userId, createWalksPrice );
   }
 
   @Get('/getWalksPrice/:userId')
