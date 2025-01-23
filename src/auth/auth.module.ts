@@ -5,6 +5,8 @@ import { ConfigModule } from '@nestjs/config';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { User, UserSchema } from './entities/user.entity';
+import { Pet, PetSchema } from 'src/walks/entities/pet.entity';
+import { WalksPrice, WalksPriceSchema } from 'src/walks/entities/walks-price.entity';
 
 @Module({
   controllers: [AuthController],
@@ -12,7 +14,9 @@ import { User, UserSchema } from './entities/user.entity';
   imports: [
     ConfigModule.forRoot(),
     MongooseModule.forFeature([
-      { name: User.name, schema: UserSchema }
+      { name: User.name, schema: UserSchema },
+      { name: Pet.name, schema: PetSchema },
+      { name: WalksPrice.name, schema: WalksPriceSchema }
     ]),
     JwtModule.register({
       global: true,

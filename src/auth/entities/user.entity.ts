@@ -1,11 +1,7 @@
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
-import { Types } from "mongoose";
 
 @Schema()
 export class User {
-
-    @Prop({ type: Types.ObjectId, ref: 'WalksPrice', required: false })
-    walksPrice?: Types.ObjectId;
 
     _id? : string;
 

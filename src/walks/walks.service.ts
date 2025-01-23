@@ -19,12 +19,24 @@ export class WalksService {
 
   ) {}
 
-  async createPet( createPetDto: CreatePetDto ): Promise<Pet> {
+  async createPet( userId: string, createPetDto: CreatePetDto ): Promise<Pet> {
+
+    const user = await this.userModel.findById( userId );
+
+    if ( !user ) {
+      throw new NotFoundException('Usuario no encontrado.');
+    }
 
     try {
 
-      const newPet = new this.petModel( createPetDto );
-      return newPet.save();
+      const newPet = new this.petModel({
+        ...createPetDto,
+        user: user._id
+      });
+
+      await newPet.save();
+
+      return newPet;
 
     } catch (error) {
 
@@ -33,8 +45,15 @@ export class WalksService {
     }
   }
 
-  findAllPets(): Promise<Pet[]> {
-    return this.petModel.find();
+  async findAllPets( userId: string ): Promise<Pet[]> {
+
+    const user = await this.userModel.findById( userId );
+
+    if ( !user ) {
+      throw new NotFoundException('Usuario no encontrado.');
+    }
+
+    return this.petModel.find({ user: user._id });
   }
 
   findOnePet( id: string ) {
@@ -88,9 +107,6 @@ export class WalksService {
         { ...createWalksPrice, user: user._id },
         { new: true, upsert: true }
       );
-
-      // user.walksPrice = walksPrice._id;
-      // await user.save();
 
       return walksPrice;
 

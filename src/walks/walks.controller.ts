@@ -9,19 +9,19 @@ export class WalksController {
 
   constructor( private readonly walksService: WalksService ) {}
 
-  @Post('/addPet')
-  createPet( @Body() createPetDto: CreatePetDto ) {
-    return this.walksService.createPet( createPetDto );
+  @Post('/addPet/:userId')
+  createPet( @Param('userId') userId: string, @Body() createPetDto: CreatePetDto ) {
+    return this.walksService.createPet( userId, createPetDto );
   }
 
-  @Get('/getAllPets')
-  findAllPets() {
-    return this.walksService.findAllPets();
+  @Get('/getAllPets/:userId')
+  findAllPets( @Param('userId') userId: string ) {
+    return this.walksService.findAllPets( userId );
   }
 
   @Get('/getPet/:id')
   findOnePet( @Param('id') id: string ) {
-    return this.walksService.findOnePet(id);
+    return this.walksService.findOnePet( id );
   }
 
   @Patch('/updatePet/:id')
@@ -48,5 +48,4 @@ export class WalksController {
   getWalksPrice( @Param('userId') userId: string ) {
     return this.walksService.findWalksPrice( userId );
   }
-
 }

@@ -1,7 +1,9 @@
-import { BadRequestException, Injectable, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { JwtService } from '@nestjs/jwt';
 import { User } from './entities/user.entity';
+import { Pet } from 'src/walks/entities/pet.entity';
+import { WalksPrice } from 'src/walks/entities/walks-price.entity';
 import { Model } from 'mongoose';
 import * as bcryptjs from 'bcryptjs';
 import { JwtPayload } from './interfaces/jwt-payload';
@@ -9,7 +11,6 @@ import { LoginResponse } from './interfaces/login-response';
 
 import {
   CreateUserDto,
-  UpdateUserDto,
   RegisterUserDto,
   LoginDto
  } from './dto';
@@ -18,6 +19,9 @@ import {
 export class AuthService {
 
   constructor(
+
+    @InjectModel( Pet.name ) private readonly petModel: Model<Pet>,
+    @InjectModel( WalksPrice.name ) private readonly walksPriceModel: Model<WalksPrice>,
 
     @InjectModel( User.name )
     private readonly userModel: Model<User>,
@@ -89,18 +93,41 @@ export class AuthService {
   }
 
   async findUserById( id: string ) {
+
     const user = await this.userModel.findById( id );
+
     const { password, ...userData } = user.toJSON();
 
     return userData;
   }
 
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} auth`;
-  }
+  async remove( id: string ) {
 
-  remove(id: number) {
-    return `This action removes a #${id} auth`;
+    const session = await this.userModel.db.startSession();
+    session.startTransaction();
+
+    try {
+
+      const user = await this.userModel.findById( id ).session( session );
+
+      if ( !user ) {
+        throw new NotFoundException('Usuario no encontrado.');
+      }
+
+      await this.petModel.deleteMany({ user: user._id }).session(session);
+      await this.walksPriceModel.deleteMany({ user: user._id }).session(session);
+      await this.userModel.findByIdAndDelete( id ).session(session);
+
+      await session.commitTransaction();
+
+    } catch (error) {
+
+      await session.abortTransaction();
+      throw new InternalServerErrorException('Un error inesperado ha ocurido.');
+
+    } finally {
+      session.endSession();
+    }
   }
 
   getJwt( payload: JwtPayload ) {
