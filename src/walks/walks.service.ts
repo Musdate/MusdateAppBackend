@@ -1,19 +1,20 @@
 import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { InjectConnection, InjectModel } from '@nestjs/mongoose';
+import { isSameWeek, parse } from 'date-fns';
+import { Connection, Model, Types } from 'mongoose';
+import { User } from 'src/auth/entities/user.entity';
 import { CreatePetDto } from './dto/create-pet.dto';
+import { CreateWalksPriceDto } from './dto/create-walks-price.dto';
 import { UpdatePetDto } from './dto/update-pet.dto';
 import { Pet } from './entities/pet.entity';
-import { Model, Types } from 'mongoose';
-import { InjectModel } from '@nestjs/mongoose';
 import { WalksPrice } from './entities/walks-price.entity';
-import { CreateWalksPriceDto } from './dto/create-walks-price.dto';
-import { User } from 'src/auth/entities/user.entity';
-import { isSameWeek, parse } from 'date-fns';
 
 @Injectable()
 export class WalksService {
 
   constructor(
 
+    @InjectConnection() private readonly connection: Connection,
     @InjectModel( Pet.name ) private readonly petModel: Model<Pet>,
     @InjectModel( WalksPrice.name ) private readonly walksPriceModel: Model<WalksPrice>,
     @InjectModel( User.name ) private readonly userModel: Model<User>
@@ -41,7 +42,7 @@ export class WalksService {
 
     } catch (error) {
 
-      throw new InternalServerErrorException('Un error inesperado ha ocurido.');
+      throw new InternalServerErrorException('Ocurrió un error inesperado al crear una mascota.');
 
     }
   }
@@ -101,7 +102,7 @@ export class WalksService {
 
       } catch {
 
-        throw new InternalServerErrorException('Un error inesperado ha ocurido.');
+        throw new InternalServerErrorException('Ocurrió un error inesperado al crear un paseo.');
 
       }
 
@@ -114,37 +115,53 @@ export class WalksService {
 
   async createOrUpdateWalksPrice( userId: string, createWalksPrice: CreateWalksPriceDto ): Promise<WalksPrice> {
 
-    const user = await this.userModel.findById( userId );
-
-    if ( !user ) {
-      throw new NotFoundException('Usuario no encontrado.');
-    }
-
-    const pets = await this.petModel.find({ user: user._id });
-
-    if ( !pets ) {
-      throw new NotFoundException('Mascotas no encontradas.');
-    }
+    const session = await this.connection.startSession();
+    session.startTransaction();
 
     try {
+
+      const user = await this.userModel.findById( userId ).session( session );
+
+      if ( !user ) {
+        throw new NotFoundException('Usuario no encontrado.');
+      }
+
+      const pets = await this.petModel.find({ user: user._id }).session( session );
+
+      if ( !pets || pets.length === 0 ) {
+        throw new NotFoundException('Mascotas no encontradas.');
+      }
 
       const walksPrice = await this.walksPriceModel.findOneAndUpdate(
         { user: user._id },
         { ...createWalksPrice, user: user._id },
         { new: true, upsert: true }
-      );
+      ).session( session );
 
-      for ( let pet of pets ) {
+      for ( const pet of pets ) {
 
         pet.totalPrice = this.calculateWalksPrice( pet, walksPrice );
+        await pet.save({ session });
 
       }
 
+      await session.commitTransaction();
+
       return walksPrice;
 
-    } catch (error) {
+    } catch ( error ) {
 
-      throw new InternalServerErrorException('Un error inesperado ha ocurido.');
+      await session.abortTransaction();
+
+      if ( error instanceof NotFoundException ) {
+        throw error;
+      }
+
+      throw new InternalServerErrorException('Ocurrió un error inesperado al crear o actualizar el precio de paseos.');
+
+    } finally {
+
+      session.endSession();
 
     }
   }

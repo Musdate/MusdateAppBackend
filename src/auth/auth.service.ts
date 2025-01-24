@@ -1,25 +1,26 @@
 import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException, UnauthorizedException } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
 import { JwtService } from '@nestjs/jwt';
-import { User } from './entities/user.entity';
+import { InjectConnection, InjectModel } from '@nestjs/mongoose';
+import * as bcryptjs from 'bcryptjs';
+import { Connection, Model } from 'mongoose';
 import { Pet } from 'src/walks/entities/pet.entity';
 import { WalksPrice } from 'src/walks/entities/walks-price.entity';
-import { Model } from 'mongoose';
-import * as bcryptjs from 'bcryptjs';
+import { User } from './entities/user.entity';
 import { JwtPayload } from './interfaces/jwt-payload';
 import { LoginResponse } from './interfaces/login-response';
 
 import {
   CreateUserDto,
-  RegisterUserDto,
-  LoginDto
- } from './dto';
+  LoginDto,
+  RegisterUserDto
+} from './dto';
 
 @Injectable()
 export class AuthService {
 
   constructor(
 
+    @InjectConnection() private readonly connection: Connection,
     @InjectModel( Pet.name ) private readonly petModel: Model<Pet>,
     @InjectModel( WalksPrice.name ) private readonly walksPriceModel: Model<WalksPrice>,
 
@@ -103,7 +104,7 @@ export class AuthService {
 
   async remove( id: string ) {
 
-    const session = await this.userModel.db.startSession();
+    const session = await this.connection.startSession();
     session.startTransaction();
 
     try {
