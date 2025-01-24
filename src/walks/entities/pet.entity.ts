@@ -16,6 +16,9 @@ export class Pet {
     @Prop({ required: false })
     walks : string[];
 
+    @Prop({ required: false })
+    totalPrice: number;
+
 }
 
 export const PetSchema = SchemaFactory.createForClass( Pet );
