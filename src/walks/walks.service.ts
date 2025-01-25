@@ -3,10 +3,8 @@ import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { isSameWeek, parse } from 'date-fns';
 import { Connection, Model, Types } from 'mongoose';
 import { User } from 'src/auth/entities/user.entity';
-import { CreatePetDto } from './dto/create-pet.dto';
-import { CreateWalksPriceDto } from './dto/create-walks-price.dto';
-import { UpdatePetDto } from './dto/update-pet.dto';
-import { Pet } from './entities/pet.entity';
+import { CreatePetDto, CreateWalksPriceDto, UpdatePetDto } from './dto';
+import { Pet, Walk } from './entities';
 import { WalksPrice } from './entities/walks-price.entity';
 
 @Injectable()
@@ -80,7 +78,7 @@ export class WalksService {
     return await this.petModel.findByIdAndDelete( id );
   }
 
-  async addWalk( id: string , walk: string ): Promise<Pet>  {
+  async addWalk( id: string , walk: Walk ): Promise<Pet>  {
 
     const pet = await this.petModel.findById( id );
 
@@ -191,15 +189,16 @@ export class WalksService {
 
     pet.walks.forEach(( walk, index) => {
 
-      const currentDate = parse( walk, 'dd-MM-yyyy', new Date() );
+      const currentDate = parse( walk.date, 'dd-MM-yyyy', new Date() );
 
       if ( index != 0 ) {
-        lastDate = parse( pet.walks[ index - 1 ], 'dd-MM-yyyy', new Date() );
+        lastDate = parse( pet.walks[ index - 1 ].date, 'dd-MM-yyyy', new Date() );
       }
 
       const isNewWeek = !isSameWeek( lastDate, currentDate, {weekStartsOn: 1} );
 
       if ( isNewWeek ) {
+        pet.walks[index].isNewWeek = true;
         totalPrice += partialPrice;
         partialPrice = 0;
         numberOfDays = 1;

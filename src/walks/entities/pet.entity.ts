@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import { Types } from "mongoose";
+import { Walk } from "./walk.entity";
 
 @Schema()
 export class Pet {
@@ -14,7 +15,7 @@ export class Pet {
     comment : string;
 
     @Prop({ required: false })
-    walks : string[];
+    walks : Walk[];
 
     @Prop({ required: false })
     totalPrice: number;

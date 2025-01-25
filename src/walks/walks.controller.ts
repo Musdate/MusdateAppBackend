@@ -1,8 +1,6 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
+import { CreatePetDto, CreateWalkDto, CreateWalksPriceDto, UpdatePetDto } from './dto';
 import { WalksService } from './walks.service';
-import { CreatePetDto } from './dto/create-pet.dto';
-import { UpdatePetDto } from './dto/update-pet.dto';
-import { CreateWalksPriceDto } from './dto/create-walks-price.dto';
 
 @Controller('walks')
 export class WalksController {
@@ -35,8 +33,8 @@ export class WalksController {
   }
 
   @Patch('/addWalk/:id')
-  addWalk( @Param('id') id: string, @Body('walk') walk: string ) {
-    return this.walksService.addWalk( id, walk );
+  addWalk( @Param('id') id: string, @Body() createWalkDto: CreateWalkDto ) {
+    return this.walksService.addWalk( id, createWalkDto );
   }
 
   @Post('/addWalksPrice/:userId')

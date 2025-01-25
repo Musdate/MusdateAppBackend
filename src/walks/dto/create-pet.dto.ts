@@ -1,4 +1,5 @@
 import { IsArray, IsString } from "class-validator";
+import { Walk } from "../entities/walk.entity";
 
 export class CreatePetDto {
 
@@ -10,6 +11,6 @@ export class CreatePetDto {
 
     @IsArray()
     @IsString({ each: true })
-    walks : string[];
+    walks : Walk[];
 
 }
