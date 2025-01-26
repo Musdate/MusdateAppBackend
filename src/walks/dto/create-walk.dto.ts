@@ -8,4 +8,7 @@ export class CreateWalkDto {
     @IsBoolean()
     isNewWeek : boolean;
 
+    @IsBoolean()
+    paid : boolean;
+
 }

@@ -56,22 +56,43 @@ export class WalksService {
     return this.petModel.find({ user: user._id });
   }
 
-  findOnePet( id: string ) {
-    return this.petModel.findById( id );
+  async findOnePet( id: string ) {
+    return await this.petModel.findById( id );
   }
 
   async updatePet( id: string , updatePetDto: UpdatePetDto ): Promise<Pet>  {
 
-    const updatedPet = await this.petModel.findByIdAndUpdate( id, updatePetDto, {
-      new: true,
-      runValidators: true
-    });
+    const pet = await this.petModel.findById( id );
 
-    if ( !updatedPet ) {
+    if ( pet ) {
+
+      let walksPrice = await this.walksPriceModel.findOne({ user: pet.user });
+
+      if ( !walksPrice ) {
+        walksPrice = new this.walksPriceModel();
+      }
+
+      const { totalPrice, pendingPrice } = this.calculateWalksPrice( updatePetDto.walks, walksPrice );
+
+      updatePetDto.totalPrice = totalPrice;
+      updatePetDto.pendingPrice = pendingPrice;
+
+      const updatedPet = await this.petModel.findByIdAndUpdate( id, updatePetDto, {
+        new: true,
+        runValidators: true
+      });
+
+      if ( !updatedPet ) {
+        throw new NotFoundException(`Mascota con ID "${ id }" no encontrada.`);
+      }
+
+      return updatedPet;
+
+    } else {
+
       throw new NotFoundException(`Mascota con ID "${ id }" no encontrada.`);
-    }
 
-    return updatedPet;
+    }
   }
 
   async removePet( id: string ): Promise<Pet> {
@@ -91,7 +112,11 @@ export class WalksService {
       }
 
       pet.walks.push( walk );
-      pet.totalPrice = this.calculateWalksPrice( pet, walksPrice );
+
+      const { totalPrice, pendingPrice } = this.calculateWalksPrice( pet.walks, walksPrice );
+
+      pet.totalPrice = totalPrice;
+      pet.pendingPrice = pendingPrice;
 
       try {
 
@@ -138,7 +163,11 @@ export class WalksService {
 
       for ( const pet of pets ) {
 
-        pet.totalPrice = this.calculateWalksPrice( pet, walksPrice );
+        const { totalPrice, pendingPrice } = this.calculateWalksPrice( pet.walks, walksPrice );
+
+        pet.totalPrice = totalPrice;
+        pet.pendingPrice = pendingPrice;
+
         await pet.save({ session });
 
       }
@@ -181,57 +210,79 @@ export class WalksService {
     return walksPrice;
   }
 
-  private calculateWalksPrice( pet: Pet, walksPrice: WalksPrice ): number {
-    let numberOfDays = 0;
-    let partialPrice = 0;
+
+  // FUNCTIONS
+
+  private calculateWalksPrice( walks: Walk[], walksPrice: WalksPrice ): { totalPrice: number, pendingPrice: number } {
+    let weekWalks = 0;
+    let paidWalks = 0;
+    let pendingPrice = 0;
     let totalPrice = 0;
     let lastDate = new Date('1900-01-01');
 
-    pet.walks.forEach(( walk, index) => {
+    const calculateWeeklyPrice = (): number => {
+      switch ( weekWalks ) {
+        case 1:
+        case 2:
+          return weekWalks * walksPrice.oneDay;
+        case 3:
+          return walksPrice.threeDays;
+        case 4:
+          return walksPrice.fourDays;
+        case 5:
+          return walksPrice.fiveDays;
+        default:
+          return weekWalks * walksPrice.oneDay;
+      }
+    };
+
+    const addWeeklyPrices = () => {
+      if ( weekWalks > 0 ) {
+        const partialPrice = calculateWeeklyPrice();
+        totalPrice += partialPrice;
+        pendingPrice += partialPrice * (( weekWalks - paidWalks ) / weekWalks );
+      }
+    };
+
+    walks.forEach(( walk, index ) => {
 
       const currentDate = parse( walk.date, 'dd-MM-yyyy', new Date() );
 
       if ( index != 0 ) {
-        lastDate = parse( pet.walks[ index - 1 ].date, 'dd-MM-yyyy', new Date() );
+        lastDate = parse( walks[ index - 1 ].date, 'dd-MM-yyyy', new Date() );
       }
 
       const isNewWeek = !isSameWeek( lastDate, currentDate, {weekStartsOn: 1} );
 
+
       if ( isNewWeek ) {
-        pet.walks[index].isNewWeek = true;
-        totalPrice += partialPrice;
-        partialPrice = 0;
-        numberOfDays = 1;
-      }
 
-      switch ( numberOfDays ) {
+        addWeeklyPrices();
 
-        case 1:
-        case 2:
-          partialPrice = numberOfDays * walksPrice.oneDay;
-          break;
-        case 3:
-          partialPrice = walksPrice.threeDays;
-          break;
-        case 4:
-          partialPrice = walksPrice.fourDays;
-          break;
-        case 5:
-          partialPrice = walksPrice.fiveDays;
-          break;
-        default:
-          partialPrice = numberOfDays * walksPrice.oneDay;
+        weekWalks = 1;
+        paidWalks = walk.paid ? 1 : 0;
+        walk.isNewWeek = true;
+
+      } else {
+
+        weekWalks++;
+
+        if ( walk.paid ) {
+          paidWalks++;
+        }
 
       }
 
-      if ( index === pet.walks.length - 1 ) {
-        totalPrice += partialPrice;
+      if ( index === walks.length - 1 ) {
+
+        addWeeklyPrices();
+
       }
-
-      numberOfDays ++;
-
     });
 
-    return totalPrice;
+    return {
+      totalPrice: totalPrice,
+      pendingPrice: pendingPrice
+    };
   }
 }

@@ -8,4 +8,7 @@ export class Walk {
     @Prop({ required: true })
     isNewWeek: boolean;
 
+    @Prop({ required: true })
+    paid: boolean;
+
 }

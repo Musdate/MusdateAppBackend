@@ -20,6 +20,9 @@ export class Pet {
     @Prop({ required: false })
     totalPrice: number;
 
+    @Prop({ required: false })
+    pendingPrice: number;
+
 }
 
 export const PetSchema = SchemaFactory.createForClass( Pet );
