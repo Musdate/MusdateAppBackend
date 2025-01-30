@@ -83,20 +83,29 @@ export class WalksService {
       });
 
       if ( !updatedPet ) {
-        throw new NotFoundException(`Mascota con ID "${ id }" no encontrada.`);
+        throw new NotFoundException(`Mascota no encontrada.`);
       }
 
       return updatedPet;
 
     } else {
 
-      throw new NotFoundException(`Mascota con ID "${ id }" no encontrada.`);
+      throw new NotFoundException(`Mascota no encontrada.`);
 
     }
   }
 
   async removePet( id: string ): Promise<Pet> {
-    return await this.petModel.findByIdAndDelete( id );
+
+    try {
+
+      return await this.petModel.findByIdAndDelete( id );
+
+    } catch {
+
+      throw new InternalServerErrorException('Ocurrió un error inesperado al eliminar mascota.');
+
+    }
   }
 
   async addWalk( id: string , walk: Walk ): Promise<Pet>  {
@@ -131,7 +140,7 @@ export class WalksService {
 
     } else {
 
-      throw new NotFoundException(`Mascota con ID "${ id }" no encontrada.`);
+      throw new NotFoundException(`Mascota no encontrada.`);
 
     }
   }
