@@ -1,4 +1,5 @@
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
+import { Bank } from "../dto";
 
 @Schema()
 export class User {
@@ -13,6 +14,9 @@ export class User {
 
     @Prop({ minlength: 6, required: true })
     password? : string;
+
+    @Prop({ required: false })
+    banks? : Bank[];
 
     @Prop({ default: true })
     isActive : boolean;

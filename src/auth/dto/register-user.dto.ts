@@ -1,4 +1,5 @@
-import { IsEmail, IsString, MinLength } from "class-validator";
+import { IsEmail, IsOptional, IsString, MinLength } from "class-validator";
+import { Bank } from "./create-user.dto";
 
 export class RegisterUserDto {
 
@@ -10,5 +11,8 @@ export class RegisterUserDto {
 
     @MinLength(6)
     password: string;
+
+    @IsOptional()
+    banks?: Bank[];
 
 }

@@ -12,7 +12,8 @@ import { LoginResponse } from './interfaces/login-response';
 import {
   CreateUserDto,
   LoginDto,
-  RegisterUserDto
+  RegisterUserDto,
+  UpdateUserDto
 } from './dto';
 
 @Injectable()
@@ -49,13 +50,12 @@ export class AuthService {
     } catch (error) {
 
       if ( error.code === 11000 ) {
-        throw new BadRequestException(`[${ createUserDto.email }] ya existe.`);
+        throw new BadRequestException(`[ ${ createUserDto.email } ] ya existe.`);
       }
 
       throw new InternalServerErrorException('Un error inesperado ha ocurido');
 
     }
-
   }
 
   async register( registerUserDto: RegisterUserDto ): Promise<LoginResponse> {
@@ -73,11 +73,7 @@ export class AuthService {
     const { email, password  } = loginDto;
     const user = await this.userModel.findOne({ email });
 
-    if ( !user ) {
-      throw new UnauthorizedException('Credenciales no válidas.')
-    }
-
-    if ( !bcryptjs.compareSync( password, user.password ) ) {
+    if ( !user || !bcryptjs.compareSync( password, user.password ) ) {
       throw new UnauthorizedException('Credenciales no válidas.')
     }
 
@@ -100,6 +96,21 @@ export class AuthService {
     const { password, ...userData } = user.toJSON();
 
     return userData;
+  }
+
+  async updateUser( userId: string , updateUserDto: UpdateUserDto ): Promise<User>  {
+
+      const updatedUser = await this.userModel.findByIdAndUpdate( userId, updateUserDto, {
+        new: true,
+        runValidators: true
+      });
+
+      if ( !updatedUser ) {
+        throw new NotFoundException(`Usuario no encontrado.`);
+      }
+
+      return updatedUser;
+
   }
 
   async remove( id: string ) {
