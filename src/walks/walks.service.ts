@@ -233,13 +233,25 @@ export class WalksService {
       switch ( weekWalks ) {
         case 1:
         case 2:
-          return weekWalks * walksPrice.oneDay;
+          return  weekWalks * walksPrice.oneDay;
         case 3:
-          return walksPrice.threeDays;
+          return  walksPrice.threeDays ||
+                  weekWalks * walksPrice.oneDay;
         case 4:
-          return walksPrice.fourDays;
+          return  walksPrice.fourDays ||
+                  weekWalks * ( walksPrice.threeDays / 3 ) ||
+                  weekWalks * walksPrice.oneDay;
         case 5:
-          return walksPrice.fiveDays;
+          return  walksPrice.fiveDays ||
+                  weekWalks * ( walksPrice.fourDays / 4 ) ||
+                  weekWalks * ( walksPrice.threeDays / 3 ) ||
+                  weekWalks * walksPrice.oneDay;
+        case 6:
+        case 7:
+          return  weekWalks * ( walksPrice.fiveDays / 5 ) ||
+                  weekWalks * ( walksPrice.fourDays / 4 ) ||
+                  weekWalks * ( walksPrice.threeDays / 3 ) ||
+                  weekWalks * walksPrice.oneDay;
         default:
           return weekWalks * walksPrice.oneDay;
       }

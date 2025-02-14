@@ -17,9 +17,9 @@ export class WalksController {
     return this.walksService.findAllPets( userId );
   }
 
-  @Get('/getPet/:id')
-  findOnePet( @Param('id') id: string ) {
-    return this.walksService.findOnePet( id );
+  @Get('/getPet/:petId')
+  findOnePet( @Param('petId') petId: string ) {
+    return this.walksService.findOnePet( petId );
   }
 
   @Patch('/updatePet/:id')
